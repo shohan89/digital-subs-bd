@@ -1,0 +1,16 @@
+-- Backs `/admin/customers`' "Disable account" action. `disabled` is a fast, RLS-readable mirror
+-- of the account's real ban state in Supabase Auth (set via `auth.admin.updateUserById(id,
+-- { ban_duration })`, which itself requires the service-role client — GoTrue's admin API has no
+-- session-scoped equivalent, unlike every other write in this feature) — kept in sync at the one
+-- place `customersService.setCustomerDisabled` performs both writes together. Listing/filtering by
+-- disabled status reads this column directly rather than calling the Admin API per row, the same
+-- "snapshot for cheap, filterable reads" reasoning as `orders.customer_name`/`subscriptions
+-- .customer_name` elsewhere in this schema.
+--
+-- No RLS policy change needed: `/admin/customers` is `requireAdmin()`-only (see
+-- `src/lib/auth/session.ts`'s `requireAdmin` doc comment, which already names this page), and
+-- `profiles`' existing "admin full access" policy already grants the admin's own session full
+-- read/write — including reading every other customer's orders/subscriptions for the stats this
+-- page shows, since those tables grant `is_staff()` (which admins satisfy) full access too. No new
+-- `security definer` function was needed anywhere in this feature for exactly that reason.
+alter table public.profiles add column disabled boolean not null default false;

@@ -1,0 +1,67 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "digitalsubsbd",
+  "compatibility_date": "2026-09-01",
+  // "nodejs_compat" is required by the OpenNext adapter itself (Supabase's SSR helpers, Zod, etc.
+  // all resolve through Node-compatible shims). "global_fetch_strictly_public" is the other
+  // adapter-required flag — see https://opennext.js.org/cloudflare/get-started.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "main": ".open-next/worker.js",
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": {
+    "enabled": true
+  },
+  // Self-reference binding — required for the adapter's time-based (ISR) revalidation to work at
+  // all (it revalidates by having the worker fetch itself). Must match "name" above.
+  // See https://opennext.js.org/cloudflare/caching.
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "digitalsubsbd"
+    }
+  ],
+  // Incremental cache (ISR/SSG output) — this app has three `revalidate = 3600` pages
+  // (homepage, /categories, /category/[slug]) plus /sitemap.xml. Without a real incremental
+  // cache backing them, those pages would behave as fully dynamic (recomputed every request,
+  // no shared cache across the edge) despite being built as static/ISR — undoing the perf work
+  // documented in PROJECT_STRUCTURE.md's Performance section. Create the bucket before deploying:
+  // `npx wrangler r2 bucket create digitalsubsbd-opennext-cache`.
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "digitalsubsbd-opennext-cache"
+    }
+  ],
+  // Tag cache (on-demand revalidation) + queue (dedupes time-based revalidation) + cache purge.
+  // Needed because `categories.actions.ts` calls `revalidatePath(ROUTES.categories)` — an
+  // on-demand invalidation of an ISR page — not just time-based revalidation. SQLite-backed
+  // Durable Objects (`new_sqlite_classes` below), so this works on the Workers Free plan, not
+  // just Paid. See https://opennext.js.org/cloudflare/caching.
+  "durable_objects": {
+    "bindings": [
+      { "name": "NEXT_CACHE_DO_QUEUE", "class_name": "DOQueueHandler" },
+      { "name": "NEXT_TAG_CACHE_DO_SHARDED", "class_name": "DOShardedTagCache" },
+      { "name": "NEXT_CACHE_DO_PURGE", "class_name": "BucketCachePurge" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["DOQueueHandler", "DOShardedTagCache", "BucketCachePurge"]
+    }
+  ],
+  // Cloudflare Images binding — lets `next/image` actually resize/re-encode Supabase Storage
+  // images at the edge instead of just passing the original file through unresized. Optional in
+  // the sense that next/image degrades gracefully without it (verified against the adapter's own
+  // image handler source — it warns and serves the original image untransformed rather than
+  // erroring), but real image optimization needs this. See
+  // https://opennext.js.org/cloudflare/howtos/image — note this incurs Cloudflare Images usage
+  // charges beyond the free tier, and `minimumCacheTTL`/`dangerouslyAllowLocalIP` in next.config.ts
+  // are not supported through this binding.
+  "images": {
+    "binding": "IMAGES"
+  }
+}
