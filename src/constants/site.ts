@@ -1,20 +1,26 @@
-import { getClientEnv } from "@/lib/env";
+import { z } from "zod";
 
-// `getClientEnv().NEXT_PUBLIC_SITE_URL` (Zod `.url()`-validated, defaults to
-// "http://localhost:3000" if unset) rather than a raw `process.env.NEXT_PUBLIC_SITE_URL ??
-// "http://localhost:3000"` read — found as a real bug: a bare domain with no protocol
-// (`NEXT_PUBLIC_SITE_URL=digitalsubsbd.com`, missing the `https://`) crashed `next build` deep
-// inside `/categories`' metadata generation (`new URL(path, siteConfig.url)` in `lib/seo.ts`
-// throwing an opaque `ERR_INVALID_URL` with no indication of which env var was at fault) instead
-// of failing loudly and clearly at startup the way every other env var in this app does. Going
-// through `getClientEnv()` restores that fail-fast behavior — the exact reason that function
-// exists, per its own doc comment.
+// Validated here in isolation — deliberately NOT routed through `getClientEnv()`, even though
+// that function validates this exact field correctly too. `getClientEnv()`'s schema *also*
+// requires `NEXT_PUBLIC_SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY` to be present, and those two
+// are unrelated to what this file needs — this file only cares about the site's own URL. That
+// coupling was tried first and broke a real Cloudflare Workers Builds deploy: those two Supabase
+// vars are configured as type "Secret" in the Cloudflare dashboard, and Cloudflare's *build*
+// container doesn't expose Secret-type variables (only Variable-type ones) — they're only
+// decrypted for the deployed Worker at runtime — so `getClientEnv()` correctly threw on them
+// being unexpectedly missing during the build, even though `siteConfig.url` never needed them at
+// all. Validating just `NEXT_PUBLIC_SITE_URL` on its own keeps the fail-fast behavior this was
+// added for (a bare domain with no protocol used to crash `next build` deep inside `/categories`'
+// metadata generation with an opaque `ERR_INVALID_URL` — see `lib/seo.ts`'s `new URL(path,
+// siteConfig.url)`) without dragging in validation for fields this file has nothing to do with.
+const siteUrl = z.string().url().default("http://localhost:3000").parse(process.env.NEXT_PUBLIC_SITE_URL);
+
 export const siteConfig = {
   name: "Digital Subs BD",
   shortName: "DigitalSubsBD",
   description:
     "Bangladesh's premium marketplace for digital subscriptions — Netflix, YouTube Premium, Spotify, Canva Pro, ChatGPT Plus, Claude AI, Adobe Creative Cloud, CapCut Pro, Microsoft 365 and more.",
-  url: getClientEnv().NEXT_PUBLIC_SITE_URL,
+  url: siteUrl,
   ogImage: "/og.png",
   currency: "BDT",
   locale: "en-BD",
