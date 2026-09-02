@@ -674,10 +674,10 @@ Quick rules for this repo specifically:
   Cloudflare Dashboard"` deploy failure; KV needs no such activation. See
   CLOUDFLARE_DEPLOYMENT.md's "Why KV, not R2" note for the full tradeoff
   (eventual consistency, lower write quota) before switching back.
-  `wrangler.jsonc`'s `kv_namespaces[0].id` is a placeholder
-  (`REPLACE_WITH_REAL_KV_NAMESPACE_ID`) until a real namespace is created
-  and its id pasted in — deploy fails clearly until that's done, `--dry-run`
-  doesn't catch it. `next.config.ts`
+  `wrangler.jsonc`'s `kv_namespaces[0].id` is a real namespace id, created
+  via `wrangler kv namespace create NEXT_INC_CACHE_KV` — if it's ever a
+  literal placeholder string instead (a fresh environment, a different
+  account), deploy fails clearly, but `--dry-run` doesn't catch it. `next.config.ts`
   deliberately does NOT call `initOpenNextCloudflareForDev()` — verified
   live that adding it hangs `next typegen`/`next dev` (the
   `WORKER_SELF_REFERENCE` service binding points the worker at itself,

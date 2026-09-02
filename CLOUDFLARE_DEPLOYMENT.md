@@ -96,16 +96,19 @@ Node.js and won't reproduce a Workers-runtime-specific bug.
    ```
 2. **Create the KV namespace** the incremental cache writes ISR/SSG output to (see [Caching
    architecture](#caching-architecture-why-this-app-needs-kv--three-durable-objects) below for
-   why this exists, and why KV rather than R2):
+   why this exists, and why KV rather than R2) — **already done for this project**:
+   `kv_namespaces[0].id` in `wrangler.jsonc` is a real namespace id
+   (`d3553ea740c24ee3a47bdaf3c97558a1`, created via the command below), not a placeholder. Only
+   relevant again if this ever needs recreating (a different Cloudflare account, a fresh
+   environment):
    ```bash
    npx wrangler kv namespace create NEXT_INC_CACHE_KV
    ```
-   This prints an `id` — paste it into `kv_namespaces[0].id` in `wrangler.jsonc`, replacing the
-   `REPLACE_WITH_REAL_KV_NAMESPACE_ID` placeholder there. Unlike R2, KV needs no account-level
-   product activation — it's available on every plan including Free by default (1 GB storage /
-   100,000 reads / 1,000 writes / 1,000 deletes per day, per Cloudflare's published KV pricing).
-   `wrangler deploy`/`opennextjs-cloudflare deploy` will fail with a clear error until this
-   placeholder is replaced with a real namespace id.
+   This prints an `id` — paste it into `kv_namespaces[0].id` in `wrangler.jsonc`. Unlike R2, KV
+   needs no account-level product activation — it's available on every plan including Free by
+   default (1 GB storage / 100,000 reads / 1,000 writes / 1,000 deletes per day, per Cloudflare's
+   published KV pricing). `wrangler deploy`/`opennextjs-cloudflare deploy` fails with a clear error
+   if this is ever left as the literal placeholder string instead of a real id.
 3. **Set runtime secrets** — see [Environment variables](#environment-variables) below. Do this
    before the first deploy; the app will throw on startup (`getServerEnv()`'s Zod validation) if a
    required one is missing.
