@@ -305,6 +305,11 @@ reads in `src/` are the Supabase/site/email ones listed above).
 
 ## Custom domain
 
+The app is currently live on its default `workers.dev` subdomain:
+**https://digitalsubsbd.maffin-killer007.workers.dev** — every push to `main` redeploys to this
+same URL via Cloudflare Workers Builds' Git integration (already connected; no manual deploy step
+needed). Attaching a real domain is optional and covered below.
+
 Prerequisite: the domain must already be an active zone on this Cloudflare account (Cloudflare
 manages its DNS) — a domain registered elsewhere with DNS still pointed at the registrar won't
 work.
