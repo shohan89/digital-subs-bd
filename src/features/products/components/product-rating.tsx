@@ -1,9 +1,9 @@
-import { StarRating } from "@/components/shared";
+import { EmptyState, StarRating } from "@/components/shared";
 import type { RatingSummary } from "@/services/reviews.service";
 
 export function ProductRating({ average, count }: RatingSummary) {
   if (count === 0) {
-    return <p className="text-sm text-muted-foreground">No reviews yet</p>;
+    return <EmptyState message="No reviews yet" />;
   }
 
   return (

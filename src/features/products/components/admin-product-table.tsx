@@ -3,6 +3,7 @@ import { Package } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PRODUCT_STATUS_BADGE_VARIANT } from "@/constants/status-badges";
 import { PRODUCT_STATUS_LABEL } from "@/constants/products";
 import { AdminProductRowActions } from "@/features/products/components/admin-product-row-actions";
@@ -12,11 +13,7 @@ import type { Product } from "@/types/product";
 
 export function AdminProductTable({ products }: { products: Product[] }) {
   if (products.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-        No products match your filters.
-      </p>
-    );
+    return <EmptyState icon={Package} message="No products match your filters." />;
   }
 
   return (

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ImageOff, ImageUp } from "lucide-react";
+import { CreditCard, ImageOff, ImageUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PAYMENT_RECORD_STATUS_BADGE_VARIANT } from "@/constants/status-badges";
 import { PAYMENT_METHOD_LABEL, PAYMENT_RECORD_STATUS_LABEL } from "@/constants/subscription";
@@ -13,11 +14,7 @@ import type { PaymentWithOrder } from "@/types/payment";
 
 export function AdminPaymentTable({ payments }: { payments: PaymentWithOrder[] }) {
   if (payments.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-        No payments match this filter.
-      </p>
-    );
+    return <EmptyState icon={CreditCard} message="No payments match this filter." />;
   }
 
   return (

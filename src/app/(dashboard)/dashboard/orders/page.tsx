@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PackageOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ROUTES } from "@/constants/routes";
 import { OrderListItem } from "@/features/orders/components";
 import { requireUser } from "@/lib/auth/session";
@@ -35,10 +36,7 @@ export default async function DashboardOrdersPage({ searchParams }: { searchPara
       <h1 className="text-xl font-semibold">Your orders</h1>
 
       {orders.length === 0 && page === 1 ? (
-        <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 py-16 text-center">
-          <PackageOpen className="size-8 text-muted-foreground" aria-hidden="true" />
-          <p className="text-sm text-muted-foreground">No orders yet.</p>
-        </div>
+        <EmptyState icon={PackageOpen} message="No orders yet." className="mt-8" />
       ) : (
         <>
           <div className="mt-6 flex flex-col gap-3">

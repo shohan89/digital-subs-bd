@@ -18,7 +18,7 @@ export function FinalCta() {
             Ready to upgrade your digital experience?
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-balance text-secondary-foreground/80">
-            Join thousands of customers already saving on their favorite subscriptions.
+            Instant delivery, verified accounts, and 24/7 support on every order.
           </p>
           <Button asChild size="lg" className="mt-8">
             <Link href={ROUTES.shop}>Shop Now</Link>

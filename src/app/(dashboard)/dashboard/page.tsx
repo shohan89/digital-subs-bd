@@ -4,6 +4,7 @@ import { AlertTriangle, CreditCard, PackageCheck, ShoppingBag } from "lucide-rea
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ROUTES } from "@/constants/routes";
 import { OrderListItem } from "@/features/orders/components";
 import { SubscriptionCard } from "@/features/subscriptions/components";
@@ -122,7 +123,7 @@ export default async function DashboardOverviewPage() {
           )}
         </div>
         {subscriptions.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">No subscriptions yet.</p>
+          <EmptyState message="No subscriptions yet." className="mt-4" />
         ) : (
           <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {subscriptions.slice(0, ACTIVE_SUBSCRIPTIONS_PREVIEW_LIMIT).map((subscription) => (
@@ -142,7 +143,7 @@ export default async function DashboardOverviewPage() {
           )}
         </div>
         {orders.length === 0 ? (
-          <p className="mt-4 text-sm text-muted-foreground">No orders yet.</p>
+          <EmptyState message="No orders yet." className="mt-4" />
         ) : (
           <div className="mt-4 flex flex-col gap-3">
             {orders.slice(0, RECENT_ORDERS_LIMIT).map((order) => (

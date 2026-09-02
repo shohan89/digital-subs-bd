@@ -24,6 +24,29 @@ const nextConfig: NextConfig = {
       { source: "/products", destination: "/shop", permanent: true },
     ];
   },
+  // Baseline hardening headers — none were set before this (found in a production-readiness
+  // audit). Deliberately conservative: this app has a login form and a payment-screenshot upload,
+  // so clickjacking/MIME-sniffing protection is a real, low-risk win to add. A strict
+  // Content-Security-Policy is NOT included here — this app loads images from Supabase Storage
+  // and calls the Supabase REST API directly from the browser (the anon-key client), and getting
+  // a CSP's source lists wrong is a "silently breaks the site" failure mode,
+  // not a "silently insecure" one; it needs its own dedicated pass with real testing against every
+  // page, not a guess bundled into an audit already covering sixteen other areas. Runs through
+  // Next.js's own header pipeline, verified live against a production build (curl)
+  // that these headers actually reach the response.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

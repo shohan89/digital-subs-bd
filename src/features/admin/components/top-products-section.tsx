@@ -4,6 +4,7 @@ import { Package } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ROUTES } from "@/constants/routes";
 import { formatCurrency } from "@/utils/format-currency";
 import type { TopProduct } from "@/types/admin";
@@ -21,7 +22,7 @@ export function TopProductsSection({ products }: { products: TopProduct[] }) {
       </CardHeader>
       <CardContent>
         {products.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">No paid orders yet.</p>
+          <EmptyState message="No paid orders yet." className="py-6 text-center" />
         ) : (
           <ul className="flex flex-col divide-y divide-border/60">
             {products.map((product, index) => (

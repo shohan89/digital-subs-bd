@@ -3,6 +3,7 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ORDER_STATUS, ORDER_STATUS_LABEL, type OrderStatus } from "@/constants/subscription";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,7 @@ export function OrderStatusChart({ counts, className }: OrderStatusChartProps) {
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-4">
         {total === 0 ? (
-          <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">No orders yet.</div>
+          <EmptyState message="No orders yet." className="flex h-40 items-center justify-center" />
         ) : (
           <>
             <div className="relative h-40 w-40 shrink-0">

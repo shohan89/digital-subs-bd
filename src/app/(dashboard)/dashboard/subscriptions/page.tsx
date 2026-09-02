@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PackageOpen } from "lucide-react";
 
+import { EmptyState } from "@/components/shared/empty-state";
 import { SUBSCRIPTION_STATUS_LABEL } from "@/constants/subscription";
 import { SubscriptionStatusSection } from "@/features/subscriptions/components";
 import { requireUser } from "@/lib/auth/session";
@@ -43,10 +44,7 @@ export default async function DashboardSubscriptionsPage() {
       </p>
 
       {subscriptions.length === 0 ? (
-        <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 py-16 text-center">
-          <PackageOpen className="size-8 text-muted-foreground" aria-hidden="true" />
-          <p className="text-sm text-muted-foreground">No subscriptions yet.</p>
-        </div>
+        <EmptyState icon={PackageOpen} message="No subscriptions yet." className="mt-8" />
       ) : (
         <div className="mt-6 flex flex-col gap-8">
           <SubscriptionStatusSection title={SUBSCRIPTION_STATUS_LABEL.active} subscriptions={grouped.active} deliveries={deliveries} />

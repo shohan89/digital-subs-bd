@@ -1,6 +1,7 @@
 import { Ban, CalendarClock, CalendarPlus, KeyRound, PackagePlus, RotateCcw } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { SUBSCRIPTION_ACTIVITY_ACTION_LABEL } from "@/constants/subscriptions";
 import { formatDate } from "@/utils/format-date";
 import type { SubscriptionActivity, SubscriptionActivityAction } from "@/types/subscription-activity";
@@ -46,7 +47,7 @@ export function SubscriptionTimelineCard({ activity }: { activity: SubscriptionA
       </CardHeader>
       <CardContent>
         {activity.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
+          <EmptyState message="No activity recorded yet." />
         ) : (
           <ol className="flex flex-col gap-5">
             {activity.map((entry) => {

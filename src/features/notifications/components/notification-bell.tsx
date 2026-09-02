@@ -6,6 +6,7 @@ import { Bell, Trash2 } from "lucide-react";
 
 import { deleteNotificationAction, getNotificationsAction, markAllNotificationsReadAction, markNotificationReadAction } from "@/actions/notifications.actions";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -100,7 +101,7 @@ export function NotificationBell() {
           {isLoading ? (
             <p className="px-2 py-4 text-center text-sm text-muted-foreground">Loading…</p>
           ) : notifications.length === 0 ? (
-            <p className="px-2 py-4 text-center text-sm text-muted-foreground">No notifications yet.</p>
+            <EmptyState message="No notifications yet." className="px-2 py-4 text-center" />
           ) : (
             notifications.map((notification) => (
               <DropdownMenuItem

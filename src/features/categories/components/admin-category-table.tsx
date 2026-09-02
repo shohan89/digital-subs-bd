@@ -3,6 +3,7 @@ import { FolderTree } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/empty-state";
 import { CATEGORY_STATUS_BADGE_VARIANT } from "@/constants/status-badges";
 import { CATEGORY_STATUS_LABEL } from "@/constants/categories";
 import { AdminCategoryRowActions } from "@/features/categories/components/admin-category-row-actions";
@@ -11,11 +12,7 @@ import type { Category } from "@/types/category";
 
 export function AdminCategoryTable({ categories }: { categories: Category[] }) {
   if (categories.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-        No categories match your filters.
-      </p>
-    );
+    return <EmptyState icon={FolderTree} message="No categories match your filters." />;
   }
 
   return (

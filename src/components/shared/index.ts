@@ -9,3 +9,4 @@ export * from "@/components/shared/star-rating";
 export * from "@/components/shared/whatsapp-button";
 export * from "@/components/shared/json-ld";
 export * from "@/components/shared/breadcrumbs";
+export * from "@/components/shared/empty-state";

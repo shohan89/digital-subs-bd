@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ORDER_STATUS_BADGE_VARIANT } from "@/constants/status-badges";
 import { ORDER_STATUS_LABEL } from "@/constants/subscription";
@@ -24,7 +25,7 @@ export function RecentOrdersSection({ orders }: { orders: Order[] }) {
       </CardHeader>
       <CardContent>
         {orders.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">No orders yet.</p>
+          <EmptyState message="No orders yet." className="py-6 text-center" />
         ) : (
           <div className="overflow-x-auto">
             <Table>

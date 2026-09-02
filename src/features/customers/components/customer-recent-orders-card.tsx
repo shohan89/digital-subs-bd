@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/shared/empty-state";
 import { ORDER_STATUS_BADGE_VARIANT, PAYMENT_STATUS_BADGE_VARIANT } from "@/constants/status-badges";
 import { ORDER_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/constants/subscription";
 import { ROUTES } from "@/constants/routes";
@@ -21,7 +22,7 @@ export function CustomerRecentOrdersCard({ orders }: { orders: Order[] }) {
       </CardHeader>
       <CardContent>
         {orders.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No orders yet.</p>
+          <EmptyState message="No orders yet." />
         ) : (
           <ul className="flex flex-col divide-y divide-border/60">
             {orders.map((order) => (

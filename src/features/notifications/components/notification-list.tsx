@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { BellOff, Trash2 } from "lucide-react";
 
 import { deleteNotificationAction, markAllNotificationsReadAction, markNotificationReadAction } from "@/actions/notifications.actions";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/shared/empty-state";
 import { NOTIFICATION_TYPE_ICON } from "@/constants/notifications";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/utils/format-date";
@@ -38,11 +39,7 @@ export function NotificationList({ initialNotifications }: { initialNotification
   }
 
   if (notifications.length === 0) {
-    return (
-      <div className="mt-8 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border/60 py-16 text-center">
-        <p className="text-sm text-muted-foreground">No notifications yet.</p>
-      </div>
-    );
+    return <EmptyState icon={BellOff} message="No notifications yet." className="mt-8" />;
   }
 
   return (

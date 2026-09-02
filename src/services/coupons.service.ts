@@ -128,8 +128,10 @@ export async function isCouponReferenced(db: DbClient, id: string): Promise<bool
 
 /** Percentage or fixed, capped at `maxDiscount` (if set) and always capped at `subtotal` itself —
  * the second cap is what "prevent negative totals" actually means: a fixed discount larger than
- * the order is simply clamped down to the order's full value, not rejected outright. */
-function computeDiscount(coupon: Coupon, subtotal: number): number {
+ * the order is simply clamped down to the order's full value, not rejected outright. Exported
+ * (only) so it's directly unit-testable — every other caller in this file still only imports the
+ * higher-level `validateCoupon`/`redeemCoupon`. */
+export function computeDiscount(coupon: Coupon, subtotal: number): number {
   const raw = coupon.discountType === "percentage" ? subtotal * (coupon.discountValue / 100) : coupon.discountValue;
   const capped = coupon.maxDiscount !== null ? Math.min(raw, coupon.maxDiscount) : raw;
   return Math.min(capped, subtotal);

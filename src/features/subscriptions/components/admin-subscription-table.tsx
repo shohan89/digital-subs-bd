@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { RefreshCw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/empty-state";
 import { SUBSCRIPTION_STATUS_BADGE_VARIANT } from "@/constants/status-badges";
 import { SUBSCRIPTION_STATUS_LABEL } from "@/constants/subscription";
 import { ROUTES } from "@/constants/routes";
@@ -18,11 +20,7 @@ function DaysRemaining({ expiryDate, cancelled }: { expiryDate: string; cancelle
 
 export function AdminSubscriptionTable({ subscriptions }: { subscriptions: Subscription[] }) {
   if (subscriptions.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-        No subscriptions match your filters.
-      </p>
-    );
+    return <EmptyState icon={RefreshCw} message="No subscriptions match your filters." />;
   }
 
   return (

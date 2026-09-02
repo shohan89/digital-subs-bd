@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ORDER_STATUS_BADGE_VARIANT, PAYMENT_STATUS_BADGE_VARIANT } from "@/constants/status-badges";
 import { ORDER_STATUS_LABEL, PAYMENT_STATUS_LABEL } from "@/constants/subscription";
@@ -18,11 +20,7 @@ function summarizeItems(order: Order): string {
 
 export function AdminOrderTable({ orders }: { orders: Order[] }) {
   if (orders.length === 0) {
-    return (
-      <p className="rounded-lg border border-dashed border-border/60 p-8 text-center text-sm text-muted-foreground">
-        No orders match your filters.
-      </p>
-    );
+    return <EmptyState icon={ShoppingBag} message="No orders match your filters." />;
   }
 
   return (
