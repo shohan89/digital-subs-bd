@@ -140,24 +140,29 @@ Deployments) once you're satisfied.
 **This document intentionally stops short of actually deploying** — running `npm run deploy` is
 your call to make, not something done as part of preparing this configuration.
 
-### Continuous deployment: GitHub Actions, not Cloudflare Workers Builds
+### Continuous deployment: Cloudflare Workers Builds
 
-The app is deployed automatically on every push to `main` via
-[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — checkout, `npm ci`,
-`opennextjs-cloudflare build`, `wrangler deploy`, authenticated with a `CLOUDFLARE_API_TOKEN`
-repository secret (Settings → Secrets and variables → Actions on the GitHub repo).
+The app deploys automatically on every push to `main` via **Cloudflare Workers Builds' own Git
+integration** — no GitHub Actions workflow, no CI file in this repo. Configured once in the
+Cloudflare dashboard (Worker → Settings → Builds):
 
-This is deliberately **not** Cloudflare Workers Builds' own Git integration (the "Git repository:
-Connect" button in the Worker's dashboard Settings → Builds page) — that was tried first, and its
-GitHub App connection repeatedly dropped back to "disconnected" (visible as "Error fetching GitHub
-User or Organization details" / "This project is disconnected from your Git account" banners in
-the dashboard), for reasons neither reproducible nor fixable from outside that OAuth flow. The
-GitHub Actions workflow reaches the same "push → live" outcome without depending on that
-integration at all — if it's ever reconnected and stable, both mechanisms could technically coexist
-(they'd just both try to deploy on every push), but there's no reason to re-enable it while the
-Actions workflow is working.
+- **Git repository**: connected to `shohan89/digital-subs-bd`
+- **Production branch**: `main`
+- **Build command**: `npx opennextjs-cloudflare build`
+- **Deploy command**: `npx wrangler deploy`
+- **Version command**: `npx opennextjs-cloudflare upload`
 
-Watch a deploy run at `https://github.com/shohan89/digital-subs-bd/actions`.
+This connection is a GitHub App authorization — if it ever shows "Git repository: Connect"
+(disconnected) instead of the repository name, that's an OAuth-level drop between Cloudflare and
+GitHub that has to be re-authorized from the dashboard directly (click **Connect**, sign in, select
+the repository) — there's no config file or CLI command that substitutes for that one step, since
+GitHub requires a live, authenticated user to grant a third-party App repository access. After
+reconnecting, re-verify the three commands above are still correct — reconnecting can reset them to
+Cloudflare's auto-detected defaults (plain `npm run build`, which does **not** produce the
+`.open-next` output `wrangler deploy` needs — see the Troubleshooting section below for the exact
+failure this causes).
+
+Watch a deploy run from the Worker's **Deployments**/**Builds** tab in the Cloudflare dashboard.
 
 ### Caching architecture: why this app needs KV + three Durable Objects
 
