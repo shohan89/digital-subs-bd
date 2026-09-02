@@ -27,12 +27,19 @@
   // (homepage, /categories, /category/[slug]) plus /sitemap.xml. Without a real incremental
   // cache backing them, those pages would behave as fully dynamic (recomputed every request,
   // no shared cache across the edge) despite being built as static/ISR — undoing the perf work
-  // documented in PROJECT_STRUCTURE.md's Performance section. Create the bucket before deploying:
-  // `npx wrangler r2 bucket create digitalsubsbd-opennext-cache`.
-  "r2_buckets": [
+  // documented in PROJECT_STRUCTURE.md's Performance section.
+  //
+  // KV-backed, not R2 — see open-next.config.ts's doc comment for why (R2 needs a one-time
+  // account-level activation this deployment's Cloudflare account hadn't done; KV needs none).
+  //
+  // *** "id" below is a PLACEHOLDER — deploy will fail until you replace it. *** Create the real
+  // namespace first (either the Cloudflare dashboard: Workers & Pages -> KV -> Create a namespace,
+  // or `npx wrangler kv namespace create NEXT_INC_CACHE_KV` from a machine with `wrangler login`
+  // already run), then paste the id it gives you in place of the placeholder.
+  "kv_namespaces": [
     {
-      "binding": "NEXT_INC_CACHE_R2_BUCKET",
-      "bucket_name": "digitalsubsbd-opennext-cache"
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "REPLACE_WITH_REAL_KV_NAMESPACE_ID"
     }
   ],
   // Tag cache (on-demand revalidation) + queue (dedupes time-based revalidation) + cache purge.

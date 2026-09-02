@@ -20,7 +20,7 @@ document is still accurate — the adapter is under active development.
   bindings](#why-next-dev-doesnt-simulate-cloudflare-bindings) below) — `npm run dev` is 100%
   ordinary `next dev`, untouched by any of this.
 - **`open-next.config.ts`** — tells the adapter which Cloudflare resources back its caching layer
-  (R2 for ISR output, Durable Objects for on-demand revalidation). Only read by
+  (KV for ISR output, Durable Objects for on-demand revalidation). Only read by
   `opennextjs-cloudflare build`.
 - **`wrangler.jsonc`** — the Worker's actual runtime configuration: bindings, compatibility flags,
   the Durable Object migrations. Read by `wrangler`/`opennextjs-cloudflare` for build, preview,
@@ -41,13 +41,13 @@ dev server day to day.
 ### Why `next dev` doesn't simulate Cloudflare bindings
 
 The official get-started guide recommends calling `initOpenNextCloudflareForDev()` from
-`next.config.ts` so that application code calling `getCloudflareContext()` (to read an R2/D1/DO
+`next.config.ts` so that application code calling `getCloudflareContext()` (to read a KV/D1/DO
 binding directly) also works under `next dev`, not just under `wrangler dev`/preview. This repo
 **deliberately doesn't do that**, for two reasons, both verified directly while writing this
 config:
 
 1. **Nothing in this codebase calls `getCloudflareContext()`.** The only Cloudflare bindings this
-   app uses at all (R2 + three Durable Objects, below) are consumed internally by the OpenNext
+   app uses at all (KV + three Durable Objects, below) are consumed internally by the OpenNext
    adapter's own caching implementation — never by application code. There's nothing for the dev
    simulation to actually serve.
 2. **It hangs.** Adding the call caused `next typegen` (part of `npm run typecheck`) to hang
@@ -94,16 +94,18 @@ Node.js and won't reproduce a Workers-runtime-specific bug.
    ```bash
    npx wrangler login
    ```
-2. **Create the R2 bucket** the incremental cache writes ISR/SSG output to (see [Caching
-   architecture](#caching-architecture-why-this-app-needs-r2--three-durable-objects) below for
-   why this exists):
+2. **Create the KV namespace** the incremental cache writes ISR/SSG output to (see [Caching
+   architecture](#caching-architecture-why-this-app-needs-kv--three-durable-objects) below for
+   why this exists, and why KV rather than R2):
    ```bash
-   npx wrangler r2 bucket create digitalsubsbd-opennext-cache
+   npx wrangler kv namespace create NEXT_INC_CACHE_KV
    ```
-   The name must match `r2_buckets[0].bucket_name` in `wrangler.jsonc`. R2 needs to be enabled on
-   the account (Cloudflare dashboard → Storage & Databases → R2) before this command succeeds —
-   it's on every plan including Free (10 GB storage / 1M Class A / 10M Class B requests per month
-   free, per Cloudflare's published R2 pricing).
+   This prints an `id` — paste it into `kv_namespaces[0].id` in `wrangler.jsonc`, replacing the
+   `REPLACE_WITH_REAL_KV_NAMESPACE_ID` placeholder there. Unlike R2, KV needs no account-level
+   product activation — it's available on every plan including Free by default (1 GB storage /
+   100,000 reads / 1,000 writes / 1,000 deletes per day, per Cloudflare's published KV pricing).
+   `wrangler deploy`/`opennextjs-cloudflare deploy` will fail with a clear error until this
+   placeholder is replaced with a real namespace id.
 3. **Set runtime secrets** — see [Environment variables](#environment-variables) below. Do this
    before the first deploy; the app will throw on startup (`getServerEnv()`'s Zod validation) if a
    required one is missing.
@@ -135,7 +137,7 @@ Deployments) once you're satisfied.
 **This document intentionally stops short of actually deploying** — running `npm run deploy` is
 your call to make, not something done as part of preparing this configuration.
 
-### Caching architecture: why this app needs R2 + three Durable Objects
+### Caching architecture: why this app needs KV + three Durable Objects
 
 This app relies on Next.js ISR in two ways that both need real backing infrastructure to work
 correctly on Cloudflare, not just to be *fast*:
@@ -154,16 +156,31 @@ behave as fully dynamic (recomputed and re-fetched from Supabase on every single
 sharing across Cloudflare's edge locations), and `revalidatePath()` would have no real cache to
 invalidate.
 
-`open-next.config.ts` and `wrangler.jsonc` are configured with the officially recommended full
-stack for an app using both revalidation styles:
+`open-next.config.ts` and `wrangler.jsonc` are configured with the full stack for an app using
+both revalidation styles — using KV rather than the officially *recommended* R2 for the
+incremental cache specifically:
 
 | Binding | Backing resource | Purpose |
 |---|---|---|
-| `NEXT_INC_CACHE_R2_BUCKET` | R2 bucket `digitalsubsbd-opennext-cache` | Stores the actual rendered ISR/SSG output |
+| `NEXT_INC_CACHE_KV` | KV namespace (see setup above) | Stores the actual rendered ISR/SSG output |
 | `NEXT_CACHE_DO_QUEUE` | Durable Object `DOQueueHandler` | Dedupes/coordinates time-based revalidation |
 | `NEXT_TAG_CACHE_DO_SHARDED` | Durable Object `DOShardedTagCache` | Tracks which cache tags/paths have been revalidated (what makes `revalidatePath()` work) |
 | `NEXT_CACHE_DO_PURGE` | Durable Object `BucketCachePurge` | Purges Cloudflare's CDN cache when `revalidatePath()`/`revalidateTag()` runs |
 | `WORKER_SELF_REFERENCE` | Service binding → this same worker | Lets the worker fetch itself, which is how time-based revalidation is actually triggered |
+
+**Why KV, not R2:** R2 is what OpenNext's docs recommend for most projects (strongly consistent,
+generous free tier), and this app used it originally. It requires a one-time account-level product
+activation, though — and hit a real deploy failure over exactly that: `wrangler deploy` (via
+`opennextjs-cloudflare deploy`'s own bucket auto-provisioning step) failed with `403 "Please enable
+R2 through the Cloudflare Dashboard"` because this deployment's Cloudflare account hadn't enabled
+R2 yet. Rather than requiring that account-level step, this app switched to the KV-backed
+incremental cache — no activation gate, included on Workers Free by default — accepting KV's
+tradeoffs in exchange: eventual consistency (a revalidated page can take a short while to propagate
+across edge locations, vs. R2's strong consistency) and a much lower write quota (1,000 writes/day
+on Free, vs. R2's roughly 1M/month). Fine for this app's traffic level; revisit if either becomes a
+real constraint, or if R2 gets enabled on the account later — swap `kv-incremental-cache` back for
+`r2-incremental-cache` in `open-next.config.ts` and reinstate the `r2_buckets` block in
+`wrangler.jsonc` (see `wrangler.jsonc`'s git history for the exact prior configuration).
 
 If a future change removes every `revalidate = N` export and every `revalidatePath()`/
 `revalidateTag()` call from the app (unlikely, but worth stating), this entire stack could be
@@ -376,13 +393,25 @@ above. This is a degradation, not a bug; the app still functions.
 
 **A `revalidatePath()` call (e.g. editing a category in `/admin/categories`) doesn't seem to
 update `/categories` after deploying.**
-Confirm the R2 bucket exists (`npx wrangler r2 bucket create digitalsubsbd-opennext-cache` was run
-before the first deploy that referenced it) and that the three Durable Object bindings in
-`wrangler.jsonc` matched what actually got deployed — check the Cloudflare dashboard's Durable
-Objects tab for `DOQueueHandler`/`DOShardedTagCache`/`BucketCachePurge` under this Worker. A
-`wrangler deploy --dry-run` (no actual deploy) will list every binding wrangler resolved without
+Confirm the KV namespace exists and `wrangler.jsonc`'s `kv_namespaces[0].id` is the real id (not
+still the `REPLACE_WITH_REAL_KV_NAMESPACE_ID` placeholder), and that the three Durable Object
+bindings in `wrangler.jsonc` matched what actually got deployed — check the Cloudflare dashboard's
+Durable Objects tab for `DOQueueHandler`/`DOShardedTagCache`/`BucketCachePurge` under this Worker.
+A `wrangler deploy --dry-run` (no actual deploy) will list every binding wrangler resolved without
 error, which is a fast way to confirm the config itself parses correctly before trying a real
-deploy.
+deploy — note it does **not** verify a KV/R2 resource actually exists, only that the binding is
+syntactically well-formed; a placeholder id passes `--dry-run` and only fails on a real deploy.
+Also remember KV is eventually consistent (see [Caching
+architecture](#caching-architecture-why-this-app-needs-kv--three-durable-objects) above) — a short
+delay after a `revalidatePath()` call before the change is visible everywhere is expected, not a
+bug.
+
+**Deploy fails with `403 "Please enable R2 through the Cloudflare Dashboard"`.**
+Only relevant if you've switched this app back to the R2 incremental cache (see the "Why KV, not
+R2" note above) — R2 needs a one-time account-level activation (Cloudflare dashboard → Storage &
+Databases → R2 → enable) before `wrangler r2 bucket create`/`opennextjs-cloudflare deploy`'s own
+bucket auto-provisioning can succeed. This is exactly the error that drove this app off R2 and
+onto KV in the first place.
 
 **Environment variable seems to have the right value locally but the wrong (or missing) value in
 production.**

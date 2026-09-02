@@ -663,11 +663,21 @@ Quick rules for this repo specifically:
   in full in [CLOUDFLARE_DEPLOYMENT.md](./CLOUDFLARE_DEPLOYMENT.md). This
   app's ISR (`revalidate = 3600` on the homepage/`/categories`/
   `/category/[slug]`/sitemap) plus on-demand `revalidatePath()` calls
-  (`categories.actions.ts`) need real backing infrastructure — an R2
-  bucket plus three Durable Objects (`DOQueueHandler`/`DOShardedTagCache`/
+  (`categories.actions.ts`) need real backing infrastructure — a KV
+  namespace plus three Durable Objects (`DOQueueHandler`/`DOShardedTagCache`/
   `BucketCachePurge`) — configured in `wrangler.jsonc`/`open-next.config.ts`,
   or the adapter silently defaults every one of them to a no-op cache and
-  those pages become fully dynamic instead of cached. `next.config.ts`
+  those pages become fully dynamic instead of cached. The incremental cache
+  is KV, not the OpenNext-recommended R2 — R2 needs a one-time
+  account-level activation this deployment's Cloudflare account hadn't
+  done, which surfaced as a real `403 "Please enable R2 through the
+  Cloudflare Dashboard"` deploy failure; KV needs no such activation. See
+  CLOUDFLARE_DEPLOYMENT.md's "Why KV, not R2" note for the full tradeoff
+  (eventual consistency, lower write quota) before switching back.
+  `wrangler.jsonc`'s `kv_namespaces[0].id` is a placeholder
+  (`REPLACE_WITH_REAL_KV_NAMESPACE_ID`) until a real namespace is created
+  and its id pasted in — deploy fails clearly until that's done, `--dry-run`
+  doesn't catch it. `next.config.ts`
   deliberately does NOT call `initOpenNextCloudflareForDev()` — verified
   live that adding it hangs `next typegen`/`next dev` (the
   `WORKER_SELF_REFERENCE` service binding points the worker at itself,
