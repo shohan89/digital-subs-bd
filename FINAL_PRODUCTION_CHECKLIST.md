@@ -1,8 +1,11 @@
 # Digital Subs BD — Final Production Readiness Checklist
 
-**Verdict: ready for production deployment**, pending the manual pre-deployment steps in
-[Before you deploy](#before-you-deploy) below (creating Cloudflare resources, setting real
-secrets, replacing placeholder business data) — none of which are code changes.
+**Status: deployed and live** at https://digitalsubsbd.maffin-killer007.workers.dev, verified
+serving real 200 responses with the expected security headers and a working KV-backed cache.
+Pushes to `main` auto-deploy via Cloudflare Workers Builds' Git integration. The remaining items
+in [Before you deploy](#before-you-deploy) below are the ones still worth doing before a wider
+public launch (replacing placeholder business data, attaching a real domain) — none of which are
+code changes, and none of which block the app from already being live and functional.
 
 This is the final audit in a series this project went through: a full [security
 audit](./CLAUDE.md), a [Cloudflare deployment](./CLOUDFLARE_DEPLOYMENT.md) pass, an environment
@@ -192,15 +195,19 @@ npm run build          ✓ 38/38 pages generated
 ## Before you deploy
 
 None of these are code changes — they're the manual, one-time steps
-[CLOUDFLARE_DEPLOYMENT.md](./CLOUDFLARE_DEPLOYMENT.md) already documents in full:
+[CLOUDFLARE_DEPLOYMENT.md](./CLOUDFLARE_DEPLOYMENT.md) already documents in full. Updated to
+reflect what's actually been done as of the live deployment:
 
-- [ ] Create the R2 bucket: `npx wrangler r2 bucket create digitalsubsbd-opennext-cache`.
-- [ ] Set every runtime secret on Cloudflare (`wrangler secret put <NAME>`) — see
-      CLOUDFLARE_DEPLOYMENT.md's "Environment variables" section for the full list and the
-      build-time-vs-runtime distinction.
-- [ ] Set `NEXT_PUBLIC_SITE_URL` to the real production domain before building for production —
-      it's both inlined into the client bundle and used server-side to build the password-reset
-      link.
+- [x] Create the incremental-cache resource — done, though as a **KV namespace**, not an R2
+      bucket (switched from the originally-planned R2 after hitting a real account-activation
+      wall; see CLOUDFLARE_DEPLOYMENT.md's "Why KV, not R2" note). Namespace id is live in
+      `wrangler.jsonc`.
+- [x] Runtime secrets set on Cloudflare — confirmed configured; the live site serving real pages
+      (login, shop, etc.) confirms the Supabase-related ones are at minimum present and correct.
+- [ ] Confirm `NEXT_PUBLIC_SITE_URL` is set to the real production URL (currently the `workers.dev`
+      one above, or a custom domain once attached — see below) rather than left at
+      `http://localhost:3000` — it's both inlined into the client bundle and used server-side to
+      build the password-reset link. Not independently verified this pass.
 - [ ] Replace the placeholder bKash/Nagad/Rocket "Send Money" numbers in
       `src/constants/site.ts`'s `siteConfig.payment` with the real merchant/personal numbers.
 - [ ] Set the real WhatsApp support number from `/admin/settings` (this one's DB-backed, not a
