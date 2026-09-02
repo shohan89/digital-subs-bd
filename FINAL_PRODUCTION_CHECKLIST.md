@@ -230,3 +230,19 @@ reflect what's actually been done as of the live deployment:
 - **Admin table mobile card layout.** Noted above — functional today via horizontal scroll, would
   be a real UX improvement but is a large enough change (8 tables) to warrant its own scoped pass
   rather than folding into this audit.
+
+## Post-audit fixes
+
+Found and fixed after this checklist's original pass, while setting up production deployment:
+
+- **Favicon** — the app had none at all (just the browser default). Added `src/app/icon.tsx` /
+  `apple-icon.tsx` using Next.js's App Router icon-generation convention, rendering the same
+  sparkle mark + brand blue already used in the navbar/footer everywhere else — no new visual
+  identity, no third-party trademarks.
+- **`siteConfig.url` crash** — a malformed `NEXT_PUBLIC_SITE_URL` (missing `https://`) crashed
+  `next build` with an opaque `ERR_INVALID_URL` deep inside `/categories`' metadata generation,
+  because `siteConfig.url` read `process.env` directly instead of through the Zod-validated
+  `getClientEnv()` every other env var in this app goes through. Fixed to use `getClientEnv()`, so
+  a bad value now fails loudly and clearly instead of crashing obscurely. If you ever see this
+  exact crash again, check whichever environment (local `.env.local`, or the Cloudflare Worker's
+  own `NEXT_PUBLIC_SITE_URL` variable) has a bare domain with no protocol.
