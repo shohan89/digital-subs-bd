@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { absoluteUrl } from "@/lib/seo";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createStaticSupabaseClient } from "@/lib/supabase/static";
 import { categoriesService, productsService } from "@/services";
 
 // Regenerated at most once an hour — matches `/category/[slug]`'s own `revalidate = 3600`, so the
@@ -14,10 +14,18 @@ export const revalidate = 3600;
  * both already hardcode `.eq("status", "active")` (see `categories.service.ts`/
  * `products.service.ts`) and return every matching row unpaginated when called this way, so
  * "active public products and categories" falls out of the query itself rather than a filter
- * applied here. `createAdminClient()` (service-role, no `cookies()` call) rather than
+ * applied here. `createStaticSupabaseClient()` (anon-key, no `cookies()` call) rather than
  * `createServerSupabaseClient()` — this route has no request-scoped session to speak of, and the
  * cookie-free client is what keeps this cacheable/`revalidate`-friendly, same reasoning as
- * `getPublicSettings()`.
+ * `/category/[slug]`'s `generateStaticParams`. Deliberately NOT `createAdminClient()` (service-
+ * role) — unlike `getPublicSettings()` (which genuinely needs it: `settings`' RLS is
+ * `is_admin()`-only, no public read policy at all), `categories`/`products` already grant public
+ * anon-key read access to active rows via RLS, so there's nothing here that needs bypassing.
+ * Using the anon-key client also means this route no longer needs `SUPABASE_SERVICE_ROLE_KEY`
+ * available at build time — found to matter in practice: that variable being configured as a
+ * Cloudflare Workers Builds "Secret" (correctly, since it's a real secret) meant it wasn't exposed
+ * during the build step, which broke static generation for this exact route when it used to read
+ * it via `createAdminClient()`.
  *
  * Deliberately excludes every `/admin/*`, `/dashboard/*`, `/checkout*`, `/cart`, `/order-tracking`,
  * `/login`, `/register`, `/forgot-password`, `/unauthorized`, `/forbidden` route — see
@@ -26,7 +34,7 @@ export const revalidate = 3600;
  * genuinely indexable route, add it to *both* files.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const db = createAdminClient();
+  const db = createStaticSupabaseClient();
 
   const [categories, products] = await Promise.all([
     categoriesService.listCategories(db).catch(() => []),
