@@ -140,6 +140,25 @@ Deployments) once you're satisfied.
 **This document intentionally stops short of actually deploying** — running `npm run deploy` is
 your call to make, not something done as part of preparing this configuration.
 
+### Continuous deployment: GitHub Actions, not Cloudflare Workers Builds
+
+The app is deployed automatically on every push to `main` via
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) — checkout, `npm ci`,
+`opennextjs-cloudflare build`, `wrangler deploy`, authenticated with a `CLOUDFLARE_API_TOKEN`
+repository secret (Settings → Secrets and variables → Actions on the GitHub repo).
+
+This is deliberately **not** Cloudflare Workers Builds' own Git integration (the "Git repository:
+Connect" button in the Worker's dashboard Settings → Builds page) — that was tried first, and its
+GitHub App connection repeatedly dropped back to "disconnected" (visible as "Error fetching GitHub
+User or Organization details" / "This project is disconnected from your Git account" banners in
+the dashboard), for reasons neither reproducible nor fixable from outside that OAuth flow. The
+GitHub Actions workflow reaches the same "push → live" outcome without depending on that
+integration at all — if it's ever reconnected and stable, both mechanisms could technically coexist
+(they'd just both try to deploy on every push), but there's no reason to re-enable it while the
+Actions workflow is working.
+
+Watch a deploy run at `https://github.com/shohan89/digital-subs-bd/actions`.
+
 ### Caching architecture: why this app needs KV + three Durable Objects
 
 This app relies on Next.js ISR in two ways that both need real backing infrastructure to work
